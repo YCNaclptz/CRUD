@@ -137,13 +137,44 @@ namespace CRUD_Project.DataAccessLayer
 
         public bool Delete<T>(T entity) where T : class
         {
-            throw new NotImplementedException();
+            var type = typeof(T);
+            var aPrimaryKey = GetPrimaryKeyPF<T>().ToArray();
+            string szTableName = GetTableNameByType<T>();
+            string szSQL = string.Empty;
+            string szFilter = aPrimaryKey
+                .Select(p => $"{p.Name} = @{p.Name}")
+                .Aggregate((kv1, kv2) => $"{kv1} and {kv2}");
+            szSQL = $"DELETE FROM {szTableName} WHERE {szFilter}";
+            try
+            {
+                OpenDbResource();
+                using (var oCmd = CreateDbCommand())
+                {
+                    oCmd.CommandText = szSQL;
+                    foreach (var prop in aPrimaryKey)
+                    {
+                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = prop.GetValue(entity);
+                    }
+                    int iResult = oCmd.ExecuteNonQuery();
+                    if (iResult > 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            finally
+            {
+                CloseDbResource();
+            }
+
         }
 
-        public bool Delete<T>(IEnumerable<T> entitys) where T : class
-        {
-            throw new NotImplementedException();
-        }
 
         public T Find<T>(params object[] keyValues) where T : class
         {

@@ -86,8 +86,18 @@ namespace CRUD_Project.Controllers
 
         // DELETE api/<EmployeeController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
+            var oDeleteEntity = m_oDbHelper.Find<Employee>(id);
+            if(oDeleteEntity != null)
+            {
+                m_oDbHelper.Delete<Employee>(oDeleteEntity);
+            }
+            else
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
     }
 }
