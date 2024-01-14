@@ -1,0 +1,32 @@
+# 忽略所有編譯生成的檔案
+bin/
+obj/
+# 忽略 NuGet 相關檔案
+*.nuget
+*.nupkg
+*.dll
+# 忽略 Visual Studio 相關檔案
+.vs/
+# 忽略 Visual Studio Code 相關檔案
+.vscode/
+# 忽略 JetBrains Rider 相關檔案
+.idea/
+# 忽略 Eclipse 相關檔案
+.classpath
+.project
+.settings/
+# 忽略操作系統生成的檔案
+Thumbs.db
+ehthumbs.db
+.DS_Store
+# 忽略編譯生成的檔案
+*.exe
+*.pdb
+*.dll
+*.class
+# 忽略日誌檔案
+*.log
+logs/
+# 忽略臨時檔案
+*.tmp
+*.swp
