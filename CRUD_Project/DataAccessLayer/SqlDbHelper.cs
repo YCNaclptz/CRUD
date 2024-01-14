@@ -1,5 +1,5 @@
 ﻿
-using CRUD_Project.EntityAttributes.CRUD_Project.DataAccessLayer.EntityAttribute;
+using CRUD_Project.EntityAttributes;
 using CRUD_Project.Models;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Data.SqlClient;
