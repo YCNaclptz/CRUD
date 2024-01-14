@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace CRUD_Project.DataAccessLayer
 {
-    public class SqlDbHelper
+    public class SqlDbHelper: IDbHelper
     {
         private SqlConnection m_oConn;
         private string m_szConn = "Data Source=127.0.0.1,1439;Database=northwind;User ID=admin;Password=admin123;TrustServerCertificate=true;";
@@ -223,6 +223,11 @@ namespace CRUD_Project.DataAccessLayer
                 list.Add(ToModel<T>(oRow));
             }
             return list;
+        }
+
+        public IEnumerable<T> Query<T>() where T : class
+        {
+            throw new NotImplementedException();
         }
     }
 }
