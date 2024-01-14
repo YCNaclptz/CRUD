@@ -17,9 +17,9 @@ namespace CRUD_Project.Controllers
         }
         // GET: api/<EmployeeController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public ActionResult<IEnumerable<Employee>> Get()
         {
-            return new string[] { "value1", "value2" };
+            return m_oDbHelper.Query<Employee>().ToList();
         }
 
         // GET api/<EmployeeController>/5

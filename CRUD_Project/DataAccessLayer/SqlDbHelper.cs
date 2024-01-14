@@ -107,7 +107,7 @@ namespace CRUD_Project.DataAccessLayer
                 var aPrimaryKey = GetPrimaryKeyPF<T>().ToArray();
                 if (aPrimaryKey.Count() != keyValues.Count())
                 {
-                    throw new Exception("參數與主鍵數量不一致！");
+                    throw new ArgumentException("參數與主鍵數量不一致！");
                 }
 
                 OpenDbResource();
@@ -132,9 +132,14 @@ namespace CRUD_Project.DataAccessLayer
                 return null;
 
             }
+            catch (ArgumentException ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
             catch (Exception ex)
             {
-
+                System.Diagnostics.Debug.WriteLine(ex);
                 throw ex;
             }
             finally
@@ -146,9 +151,62 @@ namespace CRUD_Project.DataAccessLayer
 
         public IEnumerable<T> Query<T>(int Id) where T : class
         {
-            throw new NotImplementedException();
-        }
+            try
+            {
+                string szTableName = GetTableNameByType<T>();
+                
+                OpenDbResource();
+                var oCmd = CreateDbCommand();
+                oCmd.CommandText = $"SELECT TOP 10 * from {szTableName}";
+                var oTable = new DataTable();
+                oTable.Load(oCmd.ExecuteReader());
 
+                if (oTable.Rows.Count > 0)
+                {
+                    return ToModelList<T>(oTable);
+                }
+                return null;
+
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            finally
+            {
+                CloseDbResource();
+            }
+        }
+        public IEnumerable<T> Query<T>() where T : class
+        {
+            try
+            {
+                string szTableName = GetTableNameByType<T>();
+
+                OpenDbResource();
+                var oCmd = CreateDbCommand();
+                oCmd.CommandText = $"SELECT TOP 10 * from {szTableName}";
+                var oTable = new DataTable();
+                oTable.Load(oCmd.ExecuteReader());
+
+                if (oTable.Rows.Count > 0)
+                {
+                    return ToModelList<T>(oTable);
+                }
+                return null;
+
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            finally
+            {
+                CloseDbResource();
+            }
+        }
 
         public bool Update<T>(T entity) where T : class
         {
@@ -225,9 +283,6 @@ namespace CRUD_Project.DataAccessLayer
             return list;
         }
 
-        public IEnumerable<T> Query<T>() where T : class
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }
