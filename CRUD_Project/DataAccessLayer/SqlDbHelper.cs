@@ -86,55 +86,86 @@ namespace CRUD_Project.DataAccessLayer
         }
         public bool Add<T>(T entity) where T : class
         {
-            throw new NotImplementedException();
-        }
-
-        public bool Delete<T>(T entity) where T : class
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Delete<T>(IEnumerable<T> entitys) where T : class
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Find<T>(params object[] keyValues) where T : class
-        {
+            Type type = typeof(T);
+            PropertyInfo[] aProp = type.GetProperties();
+            bool hasAttribute = Attribute.IsDefined(type, typeof(TableNameAttribute));
+            string szTableName = string.Empty;
+            if (hasAttribute)
+            {
+                TableNameAttribute attribute = (TableNameAttribute)type.GetCustomAttribute(typeof(TableNameAttribute));
+                szTableName = attribute.Name;
+            }
+            else
+            {
+                szTableName = type.Name;
+            }
+            string szSQL = string.Empty;
+            string[] aKeys = aProp.Where(p => IsPrimaryKey(p) == false).Select(p => p.Name).ToArray();
+            string[] aValues = aProp.Where(p => IsPrimaryKey(p) == false).Select(p => "@" + p.Name).ToArray();
+            szSQL = $"INSERT {szTableName} ({string.Join(",", aKeys)}) VALUES ({string.Join(",", aValues)})";
             try
             {
-                string szTableName = GetTableNameByType<T>();
-                var aPrimaryKey = GetPrimaryKeyPF<T>().ToArray();
-                if (aPrimaryKey.Count() != keyValues.Count())
-                {
-                    throw new Exception("參數與主鍵數量不一致！");
-                }
-
                 OpenDbResource();
-                var oCmd = CreateDbCommand();
-                string szFilter = aPrimaryKey
-                    .Select(p => $"{p.Name} = @{p.Name}")
-                    .Aggregate((kv1, kv2) => $"{kv1} and {kv2}");
-                oCmd.CommandText = $"select * from {szTableName} where {szFilter}";
-
-                for (int i = 0; i < aPrimaryKey.Length; i++)
+                using (var oCmd = CreateDbCommand())
                 {
-                    oCmd.Parameters.Add("@" + aPrimaryKey[i].Name, typeToSqlDbTypeMapping[aPrimaryKey[i].PropertyType]).Value = keyValues[i];
-                }
+                    oCmd.CommandText = szSQL;
 
-                var oTable = new DataTable();
-                oTable.Load(oCmd.ExecuteReader());
+                    foreach (var prop in aProp.Where(p => IsPrimaryKey(p) == false))
+                    {
+                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = prop.GetValue(entity);
+                    }
 
-                if (oTable.Rows.Count > 0)
-                {
-                    return ToModel<T>(oTable.Rows[0]);
+                    int iResult = oCmd.ExecuteNonQuery();
+                    if (iResult > 0)
+                    {
+                        return true;
+                    }
+                    return false;
                 }
-                return null;
 
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            finally
+            {
+                CloseDbResource();
+            }
+        }
 
+        public bool Delete<T>(T entity) where T : class
+        {
+            var type = typeof(T);
+            var aPrimaryKey = GetPrimaryKeyPF<T>().ToArray();
+            string szTableName = GetTableNameByType<T>();
+            string szSQL = string.Empty;
+            string szFilter = aPrimaryKey
+                .Select(p => $"{p.Name} = @{p.Name}")
+                .Aggregate((kv1, kv2) => $"{kv1} and {kv2}");
+            szSQL = $"DELETE FROM {szTableName} WHERE {szFilter}";
+            try
+            {
+                OpenDbResource();
+                using (var oCmd = CreateDbCommand())
+                {
+                    oCmd.CommandText = szSQL;
+                    foreach (var prop in aPrimaryKey)
+                    {
+                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = prop.GetValue(entity);
+                    }
+                    int iResult = oCmd.ExecuteNonQuery();
+                    if (iResult > 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
                 throw ex;
             }
             finally
@@ -144,15 +175,128 @@ namespace CRUD_Project.DataAccessLayer
 
         }
 
-        public IEnumerable<T> Query<T>(int Id) where T : class
+
+        public T Find<T>(params object[] keyValues) where T : class
         {
-            throw new NotImplementedException();
+            try
+            {
+                string szTableName = GetTableNameByType<T>();
+                var aPrimaryKey = GetPrimaryKeyPF<T>().ToArray();
+                if (aPrimaryKey.Count() != keyValues.Count())
+                {
+                    throw new ArgumentException("參數與主鍵數量不一致！");
+                }
+
+                OpenDbResource();
+                using(var oCmd = CreateDbCommand())
+                {
+                    string szFilter = aPrimaryKey
+                    .Select(p => $"{p.Name} = @{p.Name}")
+                    .Aggregate((kv1, kv2) => $"{kv1} and {kv2}");
+                    oCmd.CommandText = $"select * from {szTableName} where {szFilter}";
+
+                    for (int i = 0; i < aPrimaryKey.Length; i++)
+                    {
+                        oCmd.Parameters.Add("@" + aPrimaryKey[i].Name, typeToSqlDbTypeMapping[aPrimaryKey[i].PropertyType]).Value = keyValues[i];
+                    }
+
+                    var oTable = new DataTable();
+                    oTable.Load(oCmd.ExecuteReader());
+
+                    if (oTable.Rows.Count > 0)
+                    {
+                        return ToModel<T>(oTable.Rows[0]);
+                    }
+                    return null;
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            finally
+            {
+                CloseDbResource();
+            }
+
         }
 
+        
+        public IEnumerable<T> Query<T>() where T : class
+        {
+            try
+            {
+                string szTableName = GetTableNameByType<T>();
+
+                OpenDbResource();
+                using(var oCmd = CreateDbCommand())
+                {
+                    oCmd.CommandText = $"SELECT TOP 10 * from {szTableName}";
+                    var oTable = new DataTable();
+                    oTable.Load(oCmd.ExecuteReader());
+
+                    if (oTable.Rows.Count > 0)
+                    {
+                        return ToModelList<T>(oTable);
+                    }
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
+            finally
+            {
+                CloseDbResource();
+            }
+        }
 
         public bool Update<T>(T entity) where T : class
         {
-            throw new NotImplementedException();
+            try
+            {
+                var type = typeof(T);
+                var aProp = type.GetProperties();
+                var aPrimaryKey = GetPrimaryKeyPF<T>().ToArray();
+                string szTableName = GetTableNameByType<T>();
+                string szSQL = string.Empty;
+                string szFilter = aPrimaryKey
+                    .Select(p => $"{p.Name} = @{p.Name}")
+                    .Aggregate((kv1, kv2) => $"{kv1} and {kv2}");
+                //更新除了主鍵以外的欄位
+                var aKeyValues = aProp.Where(p => IsPrimaryKey(p) == false).Select(p => $"{p.Name} = @{p.Name}");
+                szSQL = $"UPDATE {szTableName} SET {string.Join(",", aKeyValues)} WHERE {szFilter}";
+                System.Diagnostics.Debug.WriteLine(szSQL);
+                OpenDbResource();
+                using (var oCmd = CreateDbCommand())
+                {
+                    oCmd.CommandText = szSQL;
+                    //參數包含主鍵及其他所有欄位
+                    foreach (var prop in aProp)
+                    {
+                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = prop.GetValue(entity);
+                    }
+                    int iResult = oCmd.ExecuteNonQuery();
+                    if (iResult > 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                throw ex;
+            }
         }
 
         private string GetTableNameByType<T>()
@@ -225,9 +369,6 @@ namespace CRUD_Project.DataAccessLayer
             return list;
         }
 
-        public IEnumerable<T> Query<T>() where T : class
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

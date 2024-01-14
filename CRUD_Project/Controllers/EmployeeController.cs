@@ -17,9 +17,9 @@ namespace CRUD_Project.Controllers
         }
         // GET: api/<EmployeeController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public ActionResult<IEnumerable<Employee>> Get()
         {
-            return new string[] { "value1", "value2" };
+            return m_oDbHelper.Query<Employee>().ToList();
         }
 
         // GET api/<EmployeeController>/5
@@ -36,20 +36,68 @@ namespace CRUD_Project.Controllers
 
         // POST api/<EmployeeController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public ActionResult Post([FromBody] Employee value)
         {
+            try
+            {
+                bool bResult = m_oDbHelper.Add<Employee>(value);
+                if (!bResult)
+                {
+                    return Problem("新增失敗！", statusCode: 500);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Problem("新增失敗！", statusCode: 500);
+            }
+
+            return CreatedAtAction(nameof(Get), new
+            {
+                id = value.EmployeeId
+            }, value);
         }
 
         // PUT api/<EmployeeController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public IActionResult Put(int id, [FromBody] Employee value)
         {
+            if (id != value.EmployeeId)
+            {
+                return BadRequest();
+            }
+            try
+            {
+                m_oDbHelper.Update<Employee>(value);
+            }
+            catch (Exception)
+            {
+                //更新失敗的原因可能是找不到ID
+                if (m_oDbHelper.Find<Employee>(value.EmployeeId) == null)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    return StatusCode(500, "存取失敗！");
+                }
+            }
+            return NoContent();
         }
 
         // DELETE api/<EmployeeController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
+            var oDeleteEntity = m_oDbHelper.Find<Employee>(id);
+            if(oDeleteEntity != null)
+            {
+                m_oDbHelper.Delete<Employee>(oDeleteEntity);
+            }
+            else
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
     }
 }
