@@ -67,7 +67,7 @@ namespace CRUD_Project.Controllers
             }
             try
             {
-                m_oDbHelper.Update<Employee>(value);
+                 m_oDbHelper.Update<Employee>(value);
             }
             catch (Exception)
             {

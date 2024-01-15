@@ -282,7 +282,22 @@ namespace CRUD_Project.DataAccessLayer
                     //參數包含主鍵及其他所有欄位
                     foreach (var prop in aProp)
                     {
-                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = prop.GetValue(entity);
+                        Type propertyType = prop.PropertyType;
+                        object propValue = prop.GetValue(entity);
+                        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        {
+                            propertyType = Nullable.GetUnderlyingType(propertyType);
+                            //如果Nullable<T>不為空
+                            if (propValue != null)
+                            {
+                                //取得Nullable<T>的Value
+                                propValue = propertyType.GetProperty("Value").GetValue(propValue);
+
+                            }
+                        }
+                        
+                        
+                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = propValue;
                     }
                     int iResult = oCmd.ExecuteNonQuery();
                     if (iResult > 0)
@@ -345,7 +360,7 @@ namespace CRUD_Project.DataAccessLayer
                 if (p_oRow.Table.Columns.Contains(prop.Name))
                 {
                     Type propertyType = prop.PropertyType;
-
+                    //如果是Nullable<T>，則取得T的型別
                     if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
                         propertyType = Nullable.GetUnderlyingType(propertyType);

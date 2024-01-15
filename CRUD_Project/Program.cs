@@ -13,10 +13,19 @@ namespace CRUD_Project
             builder.Services.AddControllers();
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddScoped<IDbHelper>(provider => new SqlDbHelper(connectionString));
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder => builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-
+            
+            app.UseCors("AllowAll");
             app.UseAuthorization();
 
 
