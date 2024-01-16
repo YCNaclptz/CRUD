@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CRUD_Project", "CRUD_Project\CRUD_Project.csproj", "{4DFA03F4-C5DC-4C48-B296-4122C8B7CD08}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "query_screen", "Query_Screen\query_screen.esproj", "{1CCF4997-C04C-454F-BE5C-C1EF5463D978}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,12 @@ Global
 		{4DFA03F4-C5DC-4C48-B296-4122C8B7CD08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DFA03F4-C5DC-4C48-B296-4122C8B7CD08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DFA03F4-C5DC-4C48-B296-4122C8B7CD08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CCF4997-C04C-454F-BE5C-C1EF5463D978}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CCF4997-C04C-454F-BE5C-C1EF5463D978}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CCF4997-C04C-454F-BE5C-C1EF5463D978}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{1CCF4997-C04C-454F-BE5C-C1EF5463D978}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CCF4997-C04C-454F-BE5C-C1EF5463D978}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CCF4997-C04C-454F-BE5C-C1EF5463D978}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
