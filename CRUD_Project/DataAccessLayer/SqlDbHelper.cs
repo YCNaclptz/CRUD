@@ -112,7 +112,12 @@ namespace CRUD_Project.DataAccessLayer
 
                     foreach (var prop in aProp.Where(p => IsPrimaryKey(p) == false))
                     {
-                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = prop.GetValue(entity);
+                        object propValue = prop.GetValue(entity);
+                        if (propValue == null)
+                        {
+                            propValue = DBNull.Value;
+                        }
+                        oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = propValue;
                     }
 
                     int iResult = oCmd.ExecuteNonQuery();
@@ -284,20 +289,12 @@ namespace CRUD_Project.DataAccessLayer
                     {
                         Type propertyType = prop.PropertyType;
                         object propValue = prop.GetValue(entity);
-                        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        if (propValue == null)
                         {
-                            propertyType = Nullable.GetUnderlyingType(propertyType);
-                            //如果Nullable<T>不為空
-                            if (propValue != null)
-                            {
-                                //取得Nullable<T>的Value
-                                propValue = propertyType.GetProperty("Value").GetValue(propValue);
-
-                            }
+                            propValue = DBNull.Value;
                         }
-                        
-                        
                         oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = propValue;
+
                     }
                     int iResult = oCmd.ExecuteNonQuery();
                     if (iResult > 0)
