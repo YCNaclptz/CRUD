@@ -10,7 +10,7 @@
             <button :disabled="!isCreate" @click="create">新增</button>
             <button :disabled="!isEdit" @click="edit()">修改</button>
             <button :disabled="!isUpdate" @click="update(item)">更新</button>
-            <button :disabled="!isDelete" @click="deleteItem(item.id)">刪除</button>
+            <button :disabled="!isDelete" @click="deleteItem()">刪除</button>
             <button :disabled="!isSave" @click="add(item)">儲存</button>
             <button :disabled="!isCancel" @click="cancel()">取消</button>
         </div>
@@ -89,7 +89,6 @@
                 isEdit: true,
                 isQuery: true,
                 isSave: false,
-                isDelete: false,
                 queryString: '',
                 message: '',
                 imgReduce: 'FRwvAAIAAAANAA4AFAAhAP////9CaXRtYXAgSW1hZ2UAUGFpbnQuUGljdHVyZQABBQAAAgAAAAcAAABQQnJ1c2gAAAAAAAAAAAAgVAAA',
@@ -103,7 +102,11 @@
                     }
                     return '';
                 }
-            }
+            },
+            isDelete(){
+                return this.isQuery && this.employee;
+            },
+
         },
         created() {
             // fetch the data when the view is created and the data is
@@ -130,7 +133,10 @@
             search() {
                 this.employee = null;
                 fetch('http://localhost:5185/api/Employee/' + this.queryString) 
-                    .then(r => r.json()) 
+                    .then(r => {
+                        this.message = r.statusText;
+                        return r.json()
+                    }) 
                     .then(json => {
                         this.employee = json;
                         return;
@@ -168,7 +174,10 @@
                     },
                     body: JSON.stringify(body)
                 })
-                    .then(r => r.json())
+                    .then(r => {
+                        this.message = r.statusText;
+                        return r.json();
+                    })
                     .then(json => {
                         this.employee = json;
                         return;
@@ -176,12 +185,29 @@
                         this.message = e;
                     })
             },
+            deleteItem(){
+                let agree = confirm('確定刪除？');
+                if(!agree){
+                    return;
+                }
+                fetch('http://localhost:5185/api/Employee/' + this.employee.employeeId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                })
+                    .then(r =>{ 
+                        this.message = r.statusText;
+                        this.query();
+                        this.clear();
+                    })
+            },
             edit(){
                 this.isCreate = false;
                 this.isUpdate = true;
                 this.isEdit = false;
                 this.isQuery = false;
-                this.isDelete = false;
+                // this.isDelete = false;
                 this.isSave = false;
                 this.isCancel = true;
             },
@@ -190,7 +216,7 @@
                 this.isUpdate = false;
                 this.isEdit = true;
                 this.isQuery = true;
-                this.isDelete = false;
+                // this.isDelete = false;
                 this.isSave = false;
                 this.isCancel = false;
                 this.clear();
@@ -201,7 +227,7 @@
                 this.isUpdate = false;
                 this.isEdit = true;
                 this.isQuery = true;
-                this.isDelete = false;
+                // this.isDelete = false;
                 this.isSave = false;
                 this.isCancel = false;
             },
@@ -210,7 +236,7 @@
                 this.isUpdate = false;
                 this.isEdit = false;
                 this.isQuery = false;
-                this.isDelete = false;
+                // this.isDelete = false;
                 this.isSave = true;
                 this.isCancel = true;
                 this.queryString = '';
