@@ -2,7 +2,7 @@
 {
     public interface IDbHelper
     {
-        bool Add<T>(T entity) where T : class;
+        T Add<T>(T entity) where T : class;
 
         bool Update<T>(T entity) where T : class;
 

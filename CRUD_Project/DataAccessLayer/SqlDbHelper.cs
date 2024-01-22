@@ -84,7 +84,7 @@ namespace CRUD_Project.DataAccessLayer
                 m_oTransaction.Rollback();
             }
         }
-        public bool Add<T>(T entity) where T : class
+        public T Add<T>(T entity) where T : class
         {
             Type type = typeof(T);
             PropertyInfo[] aProp = type.GetProperties();
@@ -99,10 +99,18 @@ namespace CRUD_Project.DataAccessLayer
             {
                 szTableName = type.Name;
             }
+            var oPKey = GetPrimaryKeyPF<T>();
+            //INSERTED.ColumnName: 回傳插入後的欄位值
+            //組合資料表中所有的主鍵欄位
+            string szSqlOutputVar = oPKey.Select(p => $"INSERTED.{p.Name}").Aggregate((pre, curr) => $"{pre}, {curr}");
             string szSQL = string.Empty;
             string[] aKeys = aProp.Where(p => IsPrimaryKey(p) == false).Select(p => p.Name).ToArray();
             string[] aValues = aProp.Where(p => IsPrimaryKey(p) == false).Select(p => "@" + p.Name).ToArray();
-            szSQL = $"INSERT {szTableName} ({string.Join(",", aKeys)}) VALUES ({string.Join(",", aValues)})";
+            if (oPKey is null)
+            {
+                throw new NullReferenceException("主鍵為空！");
+            }
+            szSQL = $"INSERT {szTableName} ({string.Join(",", aKeys)}) OUTPUT {szSqlOutputVar} VALUES ({string.Join(",", aValues)})";
             try
             {
                 OpenDbResource();
@@ -120,14 +128,21 @@ namespace CRUD_Project.DataAccessLayer
                         oCmd.Parameters.Add("@" + prop.Name, typeToSqlDbTypeMapping[prop.PropertyType]).Value = propValue;
                     }
 
-                    int iResult = oCmd.ExecuteNonQuery();
-                    if (iResult > 0)
+                    using (var reader = oCmd.ExecuteReader())
                     {
-                        return true;
+                        while (reader.Read())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                string columnName = reader.GetName(i);
+                                object value = reader.GetValue(i);
+                                PropertyInfo oProp = oPKey.Where(p => p.Name == columnName).First();
+                                oProp.SetValue(entity, value);
+                            }
+                        }
                     }
-                    return false;
+                    return entity;
                 }
-
             }
             catch (Exception ex)
             {

@@ -38,13 +38,10 @@ namespace CRUD_Project.Controllers
         [HttpPost]
         public ActionResult Post([FromBody] Employee value)
         {
+            Employee oResult;
             try
             {
-                bool bResult = m_oDbHelper.Add<Employee>(value);
-                if (!bResult)
-                {
-                    return Problem("新增失敗！", statusCode: 500);
-                }
+                oResult = m_oDbHelper.Add<Employee>(value);
             }
             catch (Exception ex)
             {
@@ -53,8 +50,8 @@ namespace CRUD_Project.Controllers
 
             return CreatedAtAction(nameof(Get), new
             {
-                id = value.EmployeeId
-            }, value);
+                id = oResult.EmployeeId
+            }, oResult);
         }
 
         // PUT api/<EmployeeController>/5
